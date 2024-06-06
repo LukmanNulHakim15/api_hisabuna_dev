@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AkutansiTingkatSatu as ModelsAkutansiTingkatSatu;
+use App\Models\AkutansiTingkatDua as ModelsAkutansiTingkatDua;
 use Illuminate\Http\Request;
 
-class AkutansiTingkatSatu extends Controller
+class AkutansiTingkatDua extends Controller
 {
     public function index()
     {
         return response()->json([
             'status'    => 200,
-            'message'   => 'list akutansi tingkat satu',
-            'data'      => ModelsAkutansiTingkatSatu::whereNull('is_deleted')->get(),
+            'message'   => 'list akutansi tingkat dua',
+            'data'      => ModelsAkutansiTingkatDua::whereNull('is_deleted')->get(),
         ]);
     }
 
@@ -20,21 +20,25 @@ class AkutansiTingkatSatu extends Controller
     {
         //validasi
         $request->validate([
-            'name'  => 'required|string'
+            'tingkat_satu_id'   => 'required',
+            'name'              => 'required|string'
         ]);
         $name = $request->name;
-       
+        $tingkat_satu_id    = $request->tingkat_satu_id;
+
         $data = [
-            'name'      => $name
+            'tingkat_satu_id'   => $tingkat_satu_id,
+            'name'              => $name
         ];
 
-        $save = ModelsAkutansiTingkatSatu::create($data);
+        $save = ModelsAkutansiTingkatDua::create($data);
         if($save) {
             return response()->json([
                 'status'    => 200,
                 'message'   => 'Success create data',
                 'data'      => [
-                    'name' => $name
+                    'name'          => $name,
+                    'tingkat_satu'  => $tingkat_satu_id
                 ]
             ]);
         }
@@ -51,8 +55,8 @@ class AkutansiTingkatSatu extends Controller
         }
         return response()->json([
             'status'    => 200,
-            'message'   => 'list akutansi tingkat satu',
-            'data'      => ModelsAkutansiTingkatSatu::find($id)
+            'message'   => 'list akutansi tingkat dua',
+            'data'      => ModelsAkutansiTingkatDua::find($id)
         ]);
     }
 
@@ -66,15 +70,18 @@ class AkutansiTingkatSatu extends Controller
             ]);
         }
         $request->validate([
-            'name'  => 'required|string'
+            'name'              => 'required|string',
+            'tingkat_satu_id'   => 'required'
         ]);
-        $name = $request->name;
-       
+        $name               = $request->name;
+        $tingkat_satu_id    = $request->tingkat_satu_id;
+        
         $data = [
-            'name'      => $name,
+            'name'              => $name,
+            'tingkat_satu_id'   => $tingkat_satu_id,
             'updated_at'=> date('Y-m-d H:i:s')
         ];
-        $akn = ModelsAkutansiTingkatSatu::find($id);
+        $akn = ModelsAkutansiTingkatDua::find($id);
         $update = $akn->update($data);
         if($update) {
             return response()->json([
@@ -102,7 +109,7 @@ class AkutansiTingkatSatu extends Controller
             'is_deleted'    => 1,
             'deleted_at'    => date('Y-m-d H:i:s')
         ];
-        $akn = ModelsAkutansiTingkatSatu::find($id);
+        $akn = ModelsAkutansiTingkatDua::find($id);
         $update = $akn->update($data);
         if($update) {
             return response()->json([

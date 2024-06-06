@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AkutansiTingkatSatu extends Model
+class AkutansiTingkatDua extends Model
 {
     use HasFactory;
     protected $fillable = [
+        "tingkat_satu_id",
         "name",
         "created_at",
         "created_by",
