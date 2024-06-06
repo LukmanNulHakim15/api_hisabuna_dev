@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AkutansiTingkatDua;
+use App\Http\Controllers\AkutansiTingkatEmpat;
+use App\Http\Controllers\AkutansiTingkatLima;
 use App\Http\Controllers\AkutansiTingkatSatu;
 use App\Http\Controllers\AkutansiTingkatTiga;
 use Illuminate\Http\Request;
@@ -28,3 +30,16 @@ Route::post('/idTingkatTiga',[AkutansiTingkatTiga::class,'getById'])->name('idTi
 Route::post('/updateTingkatTiga',[AkutansiTingkatTiga::class,'update'])->name('updateTingkatTiga');
 Route::post('/deleteTingkatTiga',[AkutansiTingkatTiga::class,'delete'])->name('deleteTingkatTiga');
 
+//tingkatempat
+Route::get('/tingkatEmpat',[AkutansiTingkatEmpat::class, 'index'])->name('tingkatEmpat');
+Route::post('/saveTingkatEmpat',[AkutansiTingkatEmpat::class,'create'])->name('saveTingkatEmpat');
+Route::post('/idTingkatEmpat',[AkutansiTingkatEmpat::class,'getById'])->name('idTingkatEmpat');
+Route::post('/updateTingkatEmpat',[AkutansiTingkatEmpat::class,'update'])->name('updateTingkatEmpat');
+Route::post('/deleteTingkatEmpat',[AkutansiTingkatEmpat::class,'delete'])->name('deleteTingkatEmpat');
+
+//tingkatlima
+Route::get('/tingkatLima',[AkutansiTingkatLima::class, 'index'])->name('tingkatLima');
+Route::post('/saveTingkatLima',[AkutansiTingkatLima::class,'create'])->name('saveTingkatLima');
+Route::post('/idTingkatLima',[AkutansiTingkatLima::class,'getById'])->name('idTingkatLima');
+Route::post('/updateTingkatLima',[AkutansiTingkatLima::class,'update'])->name('updateTingkatLima');
+Route::post('/deleteTingkatLima',[AkutansiTingkatLima::class,'delete'])->name('deleteTingkatLima');
