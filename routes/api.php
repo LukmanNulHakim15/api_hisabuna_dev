@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\AkutansiTingkatDua;
 use App\Http\Controllers\AkutansiTingkatEmpat;
+use App\Http\Controllers\AkutansiTingkatEnam;
 use App\Http\Controllers\AkutansiTingkatLima;
 use App\Http\Controllers\AkutansiTingkatSatu;
 use App\Http\Controllers\AkutansiTingkatTiga;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,3 +45,10 @@ Route::post('/saveTingkatLima',[AkutansiTingkatLima::class,'create'])->name('sav
 Route::post('/idTingkatLima',[AkutansiTingkatLima::class,'getById'])->name('idTingkatLima');
 Route::post('/updateTingkatLima',[AkutansiTingkatLima::class,'update'])->name('updateTingkatLima');
 Route::post('/deleteTingkatLima',[AkutansiTingkatLima::class,'delete'])->name('deleteTingkatLima');
+
+//tingkatenam
+Route::get('/tingkatEnam',[AkutansiTingkatEnam::class, 'index'])->name('tingkatEnam');
+Route::post('/saveTingkatEnam',[AkutansiTingkatEnam::class,'create'])->name('saveTingkatEnam');
+Route::post('/idTingkatEnam',[AkutansiTingkatEnam::class,'getById'])->name('idTingkatEnam');
+Route::post('/updateTingkatEnam',[AkutansiTingkatEnam::class,'update'])->name('updateTingkatEnam');
+Route::post('/deleteTingkatEnam',[AkutansiTingkatEnam::class,'delete'])->name('deleteTingkatEnam');
