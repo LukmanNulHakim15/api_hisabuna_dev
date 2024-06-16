@@ -6,7 +6,7 @@ use App\Http\Controllers\AkutansiTingkatEnam;
 use App\Http\Controllers\AkutansiTingkatLima;
 use App\Http\Controllers\AkutansiTingkatSatu;
 use App\Http\Controllers\AkutansiTingkatTiga;
-
+use App\Http\Controllers\CoaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,3 +52,11 @@ Route::post('/saveTingkatEnam',[AkutansiTingkatEnam::class,'create'])->name('sav
 Route::post('/idTingkatEnam',[AkutansiTingkatEnam::class,'getById'])->name('idTingkatEnam');
 Route::post('/updateTingkatEnam',[AkutansiTingkatEnam::class,'update'])->name('updateTingkatEnam');
 Route::post('/deleteTingkatEnam',[AkutansiTingkatEnam::class,'delete'])->name('deleteTingkatEnam');
+
+//coa
+// Route::get('/coa',[CoaController::class,'index'])->name('coa');
+// Route::post('/coa',[CoaController::class,'create'])->name('coa');
+// Route::put('/coa/{id}',[CoaController::class,'update'])->name('coa.update');
+Route::resource('coa', CoaController::class);
+Route::get('/filterLevel1_3',[CoaController::class,'filterLevel1_3'])->name('/filterLevel1_3');
+Route::get('/filterLevel4_5',[CoaController::class,'filterLevel4_5'])->name('/filterLevel4_5');
