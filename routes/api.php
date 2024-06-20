@@ -7,6 +7,7 @@ use App\Http\Controllers\AkutansiTingkatLima;
 use App\Http\Controllers\AkutansiTingkatSatu;
 use App\Http\Controllers\AkutansiTingkatTiga;
 use App\Http\Controllers\CoaController;
+use App\Http\Controllers\JurnalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -60,3 +61,5 @@ Route::post('/deleteTingkatEnam',[AkutansiTingkatEnam::class,'delete'])->name('d
 Route::resource('coa', CoaController::class);
 Route::get('/filterLevel1_3',[CoaController::class,'filterLevel1_3'])->name('/filterLevel1_3');
 Route::get('/filterLevel4_5',[CoaController::class,'filterLevel4_5'])->name('/filterLevel4_5');
+//jurnal
+Route::resource('jurnal', JurnalController::class);

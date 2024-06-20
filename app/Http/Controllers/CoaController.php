@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Coa;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +41,18 @@ class CoaController extends Controller
         }
 
         $nomor_akun     = $request->nomor_akun;
+        //validasi nomor akun
+        $query = DB::table('coas')
+            ->select('id')
+            ->whereNull('is_deleted')
+            ->where('nomor_akun', $nomor_akun)
+            ->get();
+        if(($query->count() === 0)){
+            return response()->json([
+                'status' => '400',
+                'message'=> 'Nomor Akun Telah Ada',
+            ]);
+        }
         $nomor_akun_tanpa_tanda_hubung = str_replace('-', '', $nomor_akun);
         $jumlah_nomor_akun = strlen($nomor_akun_tanpa_tanda_hubung);
         if($jumlah_nomor_akun == "6") {
