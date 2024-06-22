@@ -133,7 +133,7 @@ class JurnalController extends Controller
     public function update(Request $request, Jurnal $jurnal): JsonResponse
     {
         $input = $request->all();
-    
+        $id = $jurnal->id;
         // Melakukan validasi input
         $validator = Validator::make($input, [
             'no_transaksi' => 'required|integer',
@@ -180,28 +180,36 @@ class JurnalController extends Controller
             $credits = $request->input('credit');
             $ket_transaksis = $request->input('ket_transaksi');
     
-            // Menyimpan data jurnal detail
-            foreach ($debits as $key => $debit) {
+            // Mengambil semua entri jurnal detail yang memiliki jurnal_id tertentu
+            $jurnal_details = JurnalDetail::where('jurnal_id', $id)->get();
+
+            // Pastikan jumlah elemen input sesuai dengan jumlah entri yang ditemukan
+            if ($jurnal_details->count() !== count($coa_ids)) {
+                return response()->json(['error' => 'Jumlah input tidak sesuai dengan jumlah entri yang ditemukan.'], 400);
+            }
+
+            // Menyimpan data jurnal detail berdasarkan input dari JSON
+            foreach ($jurnal_details as $key => $jurnal_detail) {
                 $detail_data = [
                     'coa_id' => $coa_ids[$key],
-                    'debit' => $debit,
+                    'debit' => $debits[$key],
                     'credit' => $credits[$key],
                     'ket_transaksi' => $ket_transaksis[$key],
                     'updated_at' => now(),
                 ];
-    
-                $update_detail = JurnalDetail::update($detail_data);
-                
+
+                // Mengupdate data jurnal detail
+                $jurnal_detail->update($detail_data);
             }
     
             return response()->json([
                 'status' => 201,
-                'message' => 'Success create data',
+                'message' => 'Success update data',
             ]);
         } else {
             return response()->json([
                 'status' => 400,
-                'message' => 'Failed create data',
+                'message' => 'Failed update data',
             ]);
         }
     }
@@ -209,8 +217,46 @@ class JurnalController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Jurnal $jurnal)
+    public function destroy($id)
     {
-        //
+        $jurnal = Jurnal::find($id);
+
+        // Cek apakah data ditemukan
+        if (!$jurnal) {
+            return response()->json([
+                'status'  => 'False',
+                'message' => 'Data not found',
+            ], 200);
+        }
+
+        $data = [
+            'is_deleted'    => 1,
+            'deleted_at'    => now(),
+        ];
+
+        $update = $jurnal->update($data);
+
+        if ($update) {
+            $jurnal_details = JurnalDetail::where('jurnal_id', $id)->get();
+            foreach ($jurnal_details as $key => $jurnal_detail) {
+                $data = [
+                    'is_deleted'    => 1,
+                    'deleted_at'    => now(),
+                ];
+
+                $jurnal_detail->update($data);
+            }
+
+            return response()->json([
+                'status' => 201,
+                'message' => 'Success delete data',
+            ]);
+            
+        } else {
+            return response()->json([
+                'status'  => 400,
+                'message' => 'Failed delete data',
+            ]);
+        }
     }
 }
