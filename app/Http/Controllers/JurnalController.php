@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Jurnal;
 use App\Models\JurnalDetail;
+use App\Models\Saldo;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -42,11 +43,9 @@ class JurnalController extends Controller
         'no_transaksi' => 'required|integer',
         'jenis' => 'required|string',
         'keterangan' => 'required|string',
-        'lampiran' => 'required|string',
         'coa_id' => 'required|array',
         'debit' => 'array',
         'credit' => 'array',
-        'ket_transaksi' => 'required|array',
     ]);
 
     // Jika validasi gagal, kembalikan respon dengan error
@@ -60,7 +59,17 @@ class JurnalController extends Controller
 
     // Mengambil data dari request
     $no_transaksi = $request->no_transaksi;
+    //validasi jurnal pertama harus jv karna modal yang harus di setor
+    $validasi_jenis = Jurnal::all();
     $jenis = $request->jenis;
+    if(count($validasi_jenis) == 0){
+        if($jenis !== 'JV') {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Harus Jenis JV terlebih dahulu',
+            ]);
+        }
+    }
     $keterangan = $request->keterangan;
     $lampiran = $request->lampiran;
 
@@ -79,29 +88,76 @@ class JurnalController extends Controller
         $save->update(['updated_at' => null]);
 
         // Mengambil array input dari request
-        $coa_ids = $request->input('coa_id');
-        $debits = $request->input('debit');
-        $credits = $request->input('credit');
-        $ket_transaksis = $request->input('ket_transaksi');
-
-        // Menyimpan data jurnal detail
-        foreach ($debits as $key => $debit) {
-            $detail_data = [
-                'jurnal_id' => $save->id,
-                'coa_id' => $coa_ids[$key],
-                'debit' => $debit,
-                'credit' => $credits[$key],
-                'ket_transaksi' => $ket_transaksis[$key]
-            ];
-
-            $save_detail = JurnalDetail::create($detail_data);
-            $save_detail->update(['updated_at' => null]);
+        $coa_ids        = $request->input('coa_id');
+        $debits         = $request->input('debit');
+        $sum_debit      = array_sum($debits);
+        $credits        = $request->input('credit');
+        $sum_kredit     = array_sum($credits);
+        
+        if ($jenis == 'RV') {
+            // jika field current sudah ada maka ambil dari db dengan rumus current_debit dari db+debit - kredit
+            $query = Saldo::orderBy('id', 'desc')->first();
+            if ($query) {
+                $current_saldo_debit_terkini = $query->current_saldo_debit;
+                $current_saldo_kredit_terkini = $query->current_saldo_kredit;
+            } else {
+                $current_saldo_debit_terkini = 0;
+                $current_saldo_kredit_terkini = 0;
+            }
+            $current_saldo_debit = ($current_saldo_debit_terkini + $sum_debit) - $sum_kredit;
+            $current_saldo_kredit = $current_saldo_kredit_terkini + 0;
+        } else if ($jenis == 'PV') {
+            // jika input awal current saldo langsung di ambil dari kredit
+            // jika field current_kredit sudah ada maka ambil dari db dengan rumus current_kredit dari db+kredit + debit
+            $query = Saldo::orderBy('id', 'desc')->first();
+            if ($query) {
+                $current_saldo_debit_terkini = $query->current_saldo_debit;
+                $current_saldo_kredit_terkini = $query->current_saldo_kredit;
+            } else {
+                $current_saldo_debit_terkini = 0;
+                $current_saldo_kredit_terkini = 0;
+            }
+            if (is_null($current_saldo_kredit_terkini) || $current_saldo_kredit_terkini == 0) {
+                $current_saldo_debit = $current_saldo_debit_terkini + 0;
+                $current_saldo_kredit = $sum_kredit;
+            } else {
+                $current_saldo_debit = $current_saldo_debit_terkini + 0;
+                $current_saldo_kredit = ($current_saldo_kredit_terkini + $sum_kredit) + $sum_debit;
+            }
+        } else {
+            $current_saldo_debit = $sum_debit;
+            echo $current_saldo_debit;
+            $current_saldo_kredit = 0;
         }
 
-        return response()->json([
-            'status' => 201,
-            'message' => 'Success create data',
-        ]);
+        $data_saldo = [
+            'jurnal_id'             => $save->id,
+            'current_saldo_debit'   => $current_saldo_debit,
+            'current_saldo_kredit'  => $current_saldo_kredit
+
+        ];
+
+        $save_saldo = Saldo::create($data_saldo);
+        if($save_saldo) {
+              // Menyimpan data jurnal detail
+            foreach ($debits as $key => $debit) {
+                $detail_data = [
+                    'jurnal_id' => $save->id,
+                    'coa_id' => $coa_ids[$key],
+                    'debit' => $debit,
+                    'credit' => $credits[$key],
+                    'ket_transaksi' => $keterangan
+                ];
+
+                $save_detail = JurnalDetail::create($detail_data);
+                $save_detail->update(['updated_at' => null]);
+            }
+            return response()->json([
+                'status' => 201,
+                'message' => 'Success create data',
+            ]);
+        }
+
     } else {
         return response()->json([
             'status' => 400,
