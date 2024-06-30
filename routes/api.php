@@ -61,5 +61,11 @@ Route::post('/deleteTingkatEnam',[AkutansiTingkatEnam::class,'delete'])->name('d
 Route::resource('coa', CoaController::class);
 Route::get('/filterLevel1_3',[CoaController::class,'filterLevel1_3'])->name('/filterLevel1_3');
 Route::get('/filterLevel4_5',[CoaController::class,'filterLevel4_5'])->name('/filterLevel4_5');
+
 //jurnal
 Route::resource('jurnal', JurnalController::class);
+
+// Route untuk proses import Excel
+Route::post('/import', [CoaController::class, 'import'])->name('import');
+// Route untuk melakukan export data ke Excel
+Route::get('/export', [CoaController::class, 'export'])->name('export');

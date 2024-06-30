@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 
 class CoaController extends Controller
 {
@@ -269,4 +273,87 @@ class CoaController extends Controller
                 ]);
             }
     }
+
+    public function import(Request $request)
+    {
+        $this->validate($request, [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        try {
+            // Ambil file yang diupload
+            $file = $request->file('file');
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray();
+
+            if (count($data)) {
+                foreach ($data as $key => $value) {
+                    // Lewatkan baris header
+                    if ($key == 0) {
+                        continue;
+                    }
+
+                    $coaData = [
+                        'nomor_akun' => $value[0],
+                        'nama_akun' => $value[1],
+                        'level' => $value[2],
+                        'saldo_normal' => $value[3],
+                    ];
+
+                    Coa::create($coaData);
+                }
+
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Success import data',
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Error: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function export()
+    {
+        try {
+          $coas     = coa::all();
+
+          //Buat spreedsheet baru 
+          $spreadsheet = new Spreadsheet();
+          $sheet = $spreadsheet->getActiveSheet();
+
+          // Set header untuk kolom
+          $sheet->setCellValue('A1', 'Nomor Akun');
+          $sheet->setCellValue('B1', 'Nama Akun');
+          $sheet->setCellValue('C1', 'Level');
+          $sheet->setCellValue('D1', 'Saldo Normal');
+
+          $row = 2;
+            foreach ($coas as $coa) {
+                $sheet->setCellValue('A' . $row, $coa->nomor_akun);
+                $sheet->setCellValue('B' . $row, $coa->nama_akun);
+                $sheet->setCellValue('C' . $row, $coa->level);
+                $sheet->setCellValue('D' . $row, $coa->saldo_normal);
+                $row++;
+            }
+
+             // Menyimpan file Excel
+             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+             $filePath = storage_path('app/public/coas.xlsx');
+             $writer->save($filePath);
+ 
+             return response()->download($filePath);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika terjadi
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Error: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
 }
