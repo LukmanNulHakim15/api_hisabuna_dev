@@ -8,6 +8,8 @@ use App\Models\Saldo;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class JurnalController extends Controller
 {
@@ -43,9 +45,6 @@ class JurnalController extends Controller
         'no_transaksi' => 'required|integer',
         'jenis' => 'required|string',
         'keterangan' => 'required|string',
-        'coa_id' => 'required|array',
-        'debit' => 'array',
-        'credit' => 'array',
     ]);
 
     // Jika validasi gagal, kembalikan respon dengan error
@@ -191,25 +190,6 @@ class JurnalController extends Controller
         $input = $request->all();
         $id = $jurnal->id;
         // Melakukan validasi input
-        $validator = Validator::make($input, [
-            'no_transaksi' => 'required|integer',
-            'jenis' => 'required|string',
-            'keterangan' => 'required|string',
-            'lampiran' => 'required|string',
-            'coa_id' => 'required|array',
-            'debit' => 'array',
-            'credit' => 'array',
-            'ket_transaksi' => 'required|array',
-        ]);
-    
-        // Jika validasi gagal, kembalikan respon dengan error
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation Error.',
-                'errors' => $validator->errors()
-            ], 400);
-        }
     
         // Mengambil data dari request
         $no_transaksi = $request->no_transaksi;
@@ -312,6 +292,99 @@ class JurnalController extends Controller
             return response()->json([
                 'status'  => 400,
                 'message' => 'Failed delete data',
+            ]);
+        }
+    }
+
+    public function import(Request $request)
+    {
+        $this->validate($request, [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+    
+        try {
+            $id = $request->input('id');
+            $file = $request->file('file');
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray();
+    
+            if (count($data)) {
+                foreach ($data as $key => $value) {
+                    if ($key == 0) {
+                        // Skip header row
+                        continue;
+                    }
+    
+                    // Validasi dan sanitasi data
+                    if (isset($value[0], $value[1], $value[2])) {
+                        $jurnalData = [
+                            'jurnal_id'     => $id,
+                            'coa_id'        => intval($value[0]),  // Pastikan bahwa ID adalah integer
+                            'debit'         => floatval($value[1]), // Konversi ke float
+                            'credit'        => floatval($value[2]),  // Konversi ke float
+                            'ket_transaksi' => $value[3]
+                        ];
+    
+                        // Masukkan data ke dalam tabel JurnalDetail
+                        JurnalDetail::create($jurnalData);
+                    }
+                }
+    
+                return response()->json([
+                    'status'  => 200,
+                    'message' => 'Success import data',
+                ]);
+            } else {
+                return response()->json([
+                    'status'  => 400,
+                    'message' => 'File is empty or invalid data format',
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Error: ' . $e->getMessage(),
+            ]);
+        }
+    }
+    
+
+    public function export()
+    {
+        try {
+          $jurnalDetail     = JurnalDetail::all();
+
+          //Buat spreedsheet baru 
+          $spreadsheet = new Spreadsheet();
+          $sheet = $spreadsheet->getActiveSheet();
+
+          // Set header untuk kolom
+          $sheet->setCellValue('A1', 'Jurnal Id');
+          $sheet->setCellValue('B1', 'Coa Id');
+          $sheet->setCellValue('C1', 'debit');
+          $sheet->setCellValue('D1', 'credit');
+
+          $row = 2;
+            foreach ($jurnalDetail as $jurnalDetails) {
+                $sheet->setCellValue('A' . $row, $jurnalDetails->jurnal_id);
+                $sheet->setCellValue('B' . $row, $jurnalDetails->coa_id);
+                $sheet->setCellValue('C' . $row, $jurnalDetails->debit);
+                $sheet->setCellValue('D' . $row, $jurnalDetails->credit);
+                $row++;
+            }
+
+             // Menyimpan file Excel
+             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+             $filePath = storage_path('app/public/jurnalDetail.xlsx');
+             $writer->save($filePath);
+ 
+             return response()->download($filePath);
+        } catch (\Exception $e) {
+            // Tangani kesalahan jika terjadi
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Error: ' . $e->getMessage(),
             ]);
         }
     }

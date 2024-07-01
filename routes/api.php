@@ -64,6 +64,8 @@ Route::get('/filterLevel4_5',[CoaController::class,'filterLevel4_5'])->name('/fi
 
 //jurnal
 Route::resource('jurnal', JurnalController::class);
+Route::post('/importJurnal', [JurnalController::class, 'import'])->name('importJurnal');
+Route::get('/exportJurnal', [JurnalController::class, 'export'])->name('exportJurnal');
 
 // Route untuk proses import Excel
 Route::post('/import', [CoaController::class, 'import'])->name('import');
